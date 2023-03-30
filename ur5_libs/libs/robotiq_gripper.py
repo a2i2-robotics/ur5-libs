@@ -350,7 +350,7 @@ class RobotiqGripperDummy(RobotiqGripper):
         return True, self.get_closed_position()
 
     def move_and_wait_for_pos(self, position: int, speed: int, force: int) -> Tuple[int, RobotiqGripper.ObjectStatus]:  # noqa
-        return self.get_closed_position(), RobotiqGripper.ObjectStatus(0)
+        return self.get_closed_position(), RobotiqGripper.ObjectStatus(2)
 
     def open(self):
         return self.move_and_wait_for_pos(0, 255, 255)

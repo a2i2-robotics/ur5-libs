@@ -2,6 +2,7 @@
 Common utility/convenience methods used with UR5
 """
 
+import numpy as np
 import rtde_control
 import rtde_receive
 from ..libs.robotiq_gripper import RobotiqGripper
@@ -55,7 +56,7 @@ def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], spee
 
     :returns: The drop joint position.
     """
-    drop_loc = np.asarray(center_q) + np.asarray(ACTION_1)
+    drop_loc = np.asarray(center_q) + np.asarray(offset)
     rtde_c.moveJ(drop_loc, speed, acc, False)
     gripper.open()
     rtde_c.moveJ(center_q, speed, acc, False)
