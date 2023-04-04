@@ -1,13 +1,15 @@
 import numpy as np
 from .robotiq_gripper import RobotiqGripper
+from ..common import safety
 
 
 class PickAttempt:
 
-    def __init__(self, rtde_c, rtde_r, gripper):
+    def __init__(self, rtde_c, rtde_r, gripper, safe=True):
         self.rtde_c = rtde_c
         self.rtde_r = rtde_r
         self.gripper = gripper
+        self.safe = safe
 
     def move_with_increments(self, direction=[0, 0, -1], increment=0.05, max_dist=0.2):
         """Move the arm in the direction by given increments till contact
@@ -31,15 +33,16 @@ class PickAttempt:
 
         return False
 
-    def move_till_contact(self, direction=[0, 0, -0.1, 0, 0, 0], max_dist=0.2):
+    def move_till_contact(self, direction=[0, 0, -0.1, 0, 0, 0], max_dist=0.2, acceleration=0.25):
         """Move the arm in the direction by given increments till contact
         :param direction: Direction axis of movement
         :param max_dist: Max distance to travel if there is no contact
         """
-        return self.rtde_c.moveUntilContact(direction, max_dist=max_dist)
+        if self.safe: safety.assert_acc_limit(acceleration)
+        return self.rtde_c.moveUntilContact(direction, max_dist=max_dist, acceleration=acceleration)
 
     def attempt_single_pick(self, start_pos, open_gripper_at_start=True, max_dist=0.2,
-                speed=0.25):
+                speed=0.25, acceleration=0.25):
         """
         Moves the tool in z axis downwards for a maximum distance or till contact.
         Try to grab with the gripper
@@ -47,22 +50,27 @@ class PickAttempt:
         Returns:
         True if an object was grabbed. False otherwise.
         """
-        self.rtde_c.moveL(start_pos, speed=speed)
+        if self.safe: 
+            safety.assert_speed_limit(speed)
+            safety.assert_acc_limit(acceleration)
+
+        self.rtde_c.moveL(start_pos, speed=speed, acceleration=acceleration)
         if open_gripper_at_start: self.gripper.open()
 
         # if using the original ur_rtde library use 
         # contact = move_with_increments(max_dist=max_dist)
-        contact = self.move_till_contact(max_dist=max_dist)
+        contact = self.move_till_contact(max_dist=max_dist, acceleration=acceleration)
 
         if not open_gripper_at_start: self.gripper.open()
         pos, status = self.gripper.close()
         print("Gripper status", status, "position", pos)
 
-        self.rtde_c.moveL(start_pos, speed=speed)
+        self.rtde_c.moveL(start_pos, speed=speed, acceleration=acceleration)
 
         return status == RobotiqGripper.ObjectStatus.STOPPED_INNER_OBJECT
 
-    def sample_picks(self, center, radius, max_attempts = 100, open_gripper_at_start=True, max_dist=0.5, rng=None):
+    def sample_picks(self, center, radius, max_attempts = 100, open_gripper_at_start=True, max_dist=0.5, rng=None,
+                    speed=0.25, acceleration=0.25):
         """
         Try +max_attempts+ of attempts to pick an object
         within the given bounds
@@ -78,7 +86,8 @@ class PickAttempt:
 
         for o in offsets:
             new_cords = _center + o
-            success = self.attempt_single_pick(new_cords, open_gripper_at_start, max_dist)
+            success = self.attempt_single_pick(new_cords, open_gripper_at_start, max_dist,
+                                speed=speed, acceleration=acceleration)
             attempt_log.append([new_cords, success])
 
             if success: return success, attempt_log
