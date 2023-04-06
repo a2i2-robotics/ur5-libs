@@ -56,7 +56,8 @@ def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], spee
 
     :returns: The drop joint position.
     """
-    drop_loc = np.asarray(center_q) + np.asarray(offset)
+    #drop_loc = np.asarray(center_q) + np.asarray(offset)
+    drop_loc = np.asarray(offset)
     rtde_c.moveJ(drop_loc, speed, acc, False)
     gripper.open()
     rtde_c.moveJ(center_q, speed, acc, False)
