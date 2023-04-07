@@ -44,6 +44,26 @@ def connect_and_activate_gripper(c_ip, r_ip=None, g_ip=None, g_port=63352, test=
         print(ex)
         raise ex
 
+def drop_and_return(rtde_c, gripper, center_q, drop_q, speed=1.05, acc=0.25):
+    """
+    Move the robot arm to a position in joint space,
+    open the gripper and return to the base position
+
+    :param rtde_c: RTDE Controller.
+    :param gripper: Gripper instance.
+    :param center_q: The base joint position.
+    :param drop_q: Position in joint space in which robot arm will drop the item.
+    :param speed: speed of the movement
+    :param acc: acceleration of the arm movement
+
+    :returns: The drop joint position.
+    """
+    rtde_c.moveJ(drop_q, speed, acc, False)
+    gripper.open()
+    rtde_c.moveJ(center_q, speed, acc, False)
+
+    return drop_q
+
 def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], speed=1.05, acc=0.25):
     """
     Move the robot arm to a joint offset from a base joint position,
@@ -53,13 +73,10 @@ def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], spee
     :param gripper: Gripper instance.
     :param center_q: The base joint position.
     :param offset: Offset from the center_q to which robot arm will drop the item.
+    :param speed: speed of the movement
+    :param acc: acceleration of the arm movement
 
     :returns: The drop joint position.
     """
-    #drop_loc = np.asarray(center_q) + np.asarray(offset)
-    drop_loc = np.asarray(offset)
-    rtde_c.moveJ(drop_loc, speed, acc, False)
-    gripper.open()
-    rtde_c.moveJ(center_q, speed, acc, False)
-
-    return drop_loc
+    drop_loc = np.asarray(center_q) + np.asarray(offset)
+    return self.drop_and_return(rtde_c, gripper, center_q, drop_loc, speed=speed, acc=acc)
