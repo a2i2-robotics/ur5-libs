@@ -10,6 +10,8 @@ class PickAttempt:
         self.rtde_r = rtde_r
         self.gripper = gripper
         self.safe = safe
+        self.reattempt_radius = 0.01
+        self.reattempt_num = 10
 
     def move_with_increments(self, direction=[0, 0, -1], increment=0.05, max_dist=0.2):
         """Move the arm in the direction by given increments till contact
@@ -42,7 +44,7 @@ class PickAttempt:
         return self.rtde_c.moveUntilContact(direction, max_dist=max_dist, acceleration=acceleration)
 
     def attempt_single_pick(self, start_pos, open_gripper_at_start=True, max_dist=0.2,
-                speed=0.25, acceleration=0.25):
+                speed=0.25, acceleration=0.25, gripper_pos=None):
         """
         Moves the tool in z axis downwards for a maximum distance or till contact.
         Try to grab with the gripper
@@ -55,6 +57,10 @@ class PickAttempt:
             safety.assert_acc_limit(acceleration)
 
         self.rtde_c.moveL(start_pos, speed=speed, acceleration=acceleration)
+        if gripper_pos is not None: 
+            actual_q = self.rtde_r.getActualQ()
+            actual_q[5] = gripper_pos
+            self.rtde_c.moveJ(actual_q)
         if open_gripper_at_start: self.gripper.open()
 
         # if using the original ur_rtde library use 
@@ -67,10 +73,10 @@ class PickAttempt:
 
         self.rtde_c.moveL(start_pos, speed=speed, acceleration=acceleration)
 
-        return status == RobotiqGripper.ObjectStatus.STOPPED_INNER_OBJECT
+        return status == RobotiqGripper.ObjectStatus.STOPPED_INNER_OBJECT, contact
 
     def sample_picks(self, center, radius, max_attempts = 100, open_gripper_at_start=True, max_dist=0.5, rng=None,
-                    speed=0.25, acceleration=0.25):
+                    speed=0.25, acceleration=0.25, sample_gripper=True, reattempt=True):
         """
         Try +max_attempts+ of attempts to pick an object
         within the given bounds
@@ -79,6 +85,7 @@ class PickAttempt:
         """
         _center = np.asarray(center)
         _radius = np.asarray(radius)
+        gripper_pos = None
         if rng is None: rng = np.random
         offsets = rng.uniform(low=-_radius, high=_radius, size=(max_attempts, 2))
         offsets = np.pad(offsets, [(0, 0), (0, 4)])
@@ -86,9 +93,16 @@ class PickAttempt:
 
         for o in offsets:
             new_cords = _center + o
-            success = self.attempt_single_pick(new_cords, open_gripper_at_start, max_dist,
-                                speed=speed, acceleration=acceleration)
+            if sample_gripper: gripper_pos = rng.uniform()
+            success, contact = self.attempt_single_pick(new_cords, open_gripper_at_start, max_dist,
+                                speed=speed, acceleration=acceleration, gripper_pos=gripper_pos)
             attempt_log.append([new_cords, success])
+
+            if reattempt and contact and not success:
+                success, _log = self.picker.sample_picks(new_cords, self.reattempt_radius, max_attempts=self.reattempt_num,
+                                                        max_dist=max_dist, rng=rng, speed=speed, acceleration=acceleration,
+                                                        sample_gripper=sample_gripper, reattempt=False)
+                attempt_log += _log
 
             if success: return success, attempt_log
 
