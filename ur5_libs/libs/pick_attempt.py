@@ -99,7 +99,7 @@ class PickAttempt:
             attempt_log.append([new_cords, success])
 
             if reattempt and contact and not success:
-                success, _log = self.picker.sample_picks(new_cords, self.reattempt_radius, max_attempts=self.reattempt_num,
+                success, _log = self.sample_picks(new_cords, self.reattempt_radius, max_attempts=self.reattempt_num,
                                                         max_dist=max_dist, rng=rng, speed=speed, acceleration=acceleration,
                                                         sample_gripper=sample_gripper, reattempt=False)
                 attempt_log += _log
