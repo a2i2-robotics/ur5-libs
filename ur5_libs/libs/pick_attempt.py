@@ -10,8 +10,8 @@ class PickAttempt:
         self.rtde_r = rtde_r
         self.gripper = gripper
         self.safe = safe
-        self.reattempt_radius = 0.01
-        self.reattempt_num = 10
+        self.reattempt_radius = 0.02
+        self.reattempt_num = 5
 
     def move_with_increments(self, direction=[0, 0, -1], increment=0.05, max_dist=0.2):
         """Move the arm in the direction by given increments till contact
@@ -93,12 +93,14 @@ class PickAttempt:
 
         for o in offsets:
             new_cords = _center + o
-            if sample_gripper: gripper_pos = rng.uniform()
+            if sample_gripper: gripper_pos = rng.uniform(low=0.0, high=2.0)
             success, contact = self.attempt_single_pick(new_cords, open_gripper_at_start, max_dist,
                                 speed=speed, acceleration=acceleration, gripper_pos=gripper_pos)
             attempt_log.append([new_cords, success])
+            print("Contact", contact)
 
             if reattempt and contact and not success:
+                print("Contact detected. Reattempting...")
                 success, _log = self.sample_picks(new_cords, self.reattempt_radius, max_attempts=self.reattempt_num,
                                                         max_dist=max_dist, rng=rng, speed=speed, acceleration=acceleration,
                                                         sample_gripper=sample_gripper, reattempt=False)

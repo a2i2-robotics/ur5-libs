@@ -1,2 +1,5 @@
 __pycache__/
 gym_envs.egg-info
+build/
+dist/
+ur5_lib.egg-info/
