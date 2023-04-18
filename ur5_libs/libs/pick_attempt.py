@@ -5,13 +5,13 @@ from ..common import safety
 
 class PickAttempt:
 
-    def __init__(self, rtde_c, rtde_r, gripper, safe=True):
+    def __init__(self, rtde_c, rtde_r, gripper, safe=True, reattempts=5, reattempt_radius=0.02):
         self.rtde_c = rtde_c
         self.rtde_r = rtde_r
         self.gripper = gripper
         self.safe = safe
-        self.reattempt_radius = 0.02
-        self.reattempt_num = 5
+        self.reattempt_num = reattempts
+        self.reattempt_radius = reattempt_radius
 
     def move_with_increments(self, direction=[0, 0, -1], increment=0.05, max_dist=0.2):
         """Move the arm in the direction by given increments till contact
