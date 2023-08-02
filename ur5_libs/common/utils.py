@@ -80,3 +80,23 @@ def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], spee
     """
     drop_loc = np.asarray(center_q) + np.asarray(offset)
     return self.drop_and_return(rtde_c, gripper, center_q, drop_loc, speed=speed, acc=acc)
+
+def drop_tcp_and_return(rtde_c, gripper, center_pos, drop_pos, speed=1.05, acc=0.25):
+    """
+    Move the robot arm to a position in Tool Center Point (tcp) frame,
+    open the gripper and return to the base position
+
+    :param rtde_c: RTDE Controller.
+    :param gripper: Gripper instance.
+    :param center_pos: The base tcp position.
+    :param drop_pos: Position (tcp) in which robot arm will drop the item.
+    :param speed: speed of the movement
+    :param acc: acceleration of the arm movement
+
+    :returns: The drop joint position.
+    """
+    rtde_c.moveL(drop_pos, speed, acc, False)
+    gripper.open()
+    rtde_c.moveL(center_pos, speed, acc, False)
+
+    return drop_pos
