@@ -82,7 +82,7 @@ def drop_offset_and_return(rtde_c, gripper, center_q, offset=[0,0,0,0,0,0], spee
     return self.drop_and_return(rtde_c, gripper, center_q, drop_loc, speed=speed, acc=acc)
 
 def drop_tcp_and_return(rtde_c, gripper, drop_pos, return_pos, before_pos=None,
-                        speed=1.05, acc=0.25):
+                        speed=1.05, acc=0.25, open_gripper=True):
     """
     Move the robot arm to a pose (x,y,z,rx,ry,rz) in base coordinate frame,
     open the gripper and return to the base position
@@ -101,7 +101,7 @@ def drop_tcp_and_return(rtde_c, gripper, drop_pos, return_pos, before_pos=None,
     if before_pos is not None:
         rtde_c.moveL(before_pos, speed, acc, False)
     rtde_c.moveL(drop_pos, speed, acc, False)
-    gripper.open()
+    if open_gripper: gripper.open()
     rtde_c.moveL(return_pos, speed, acc, False)
 
     return drop_pos
